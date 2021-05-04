@@ -224,7 +224,7 @@ var enemybullets;
         bullet = this.physics.add.sprite(c.x, c.y, "bullet");  
         bullet.kont = Math.atan((player.y-c.y)/(c.x-player.x));
         bullet.kontc=Math.cos(bullet.kont)
-        bullet.konts=Math.sin(bullet.kont)
+        bullet.konts=Math.sin(bullet.kont)*-1
         console.log("Cos="+bullet.kontc)
         console.log("Sin="+bullet.konts)
         enemybullets.add(bullet)
