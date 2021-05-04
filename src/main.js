@@ -22,7 +22,7 @@ var game = new Phaser.Game(config);
 
 let sceneWidth=4000; //szerokość całej sceny
 let diamenty= 20; //ilość diamentow do zebrania
-let wrogowie= 0; //ilość wrogów do pokonania, albo i nie
+let wrogowie= 8; //ilość wrogów do pokonania, albo i nie
 
 
 
@@ -317,7 +317,7 @@ var enemybullets;
            c.destroy();
            if(showScore!=null)
            showScore.destroy();
-           showScore = this.add.text(0, 0, 'Diamenty: ' + score, { font: "32px Arial" });
+           showScore = this.add.text(0, 0, 'Diamenty: ' + score+'/'+diamenty, { font: "32px Arial" });
            showScore.setScrollFactor(0);
          }
       }
