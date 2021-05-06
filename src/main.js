@@ -8,7 +8,7 @@ const config = { //dane konfiguracyjne, tutaj nic nie trzeba zmieniać(chyba)
   physics: {
     default: "arcade",
     arcade: {
-      gravity: { y: 500},
+      gravity: { y: 300},
       debug: false
     }
   },
@@ -22,7 +22,7 @@ var game = new Phaser.Game(config);
 
 let sceneWidth=4000; //szerokość całej sceny
 let diamenty= 20; //ilość diamentow do zebrania
-let wrogowie= 8; //ilość wrogów do pokonania, albo i nie
+let wrogowie= 5; //ilość wrogów do pokonania, albo i nie
 
 
 
@@ -33,18 +33,27 @@ function preload() { //ładowanie obiektów  tutaj będziesz musiała zamiast ty
 
    
 
-    this.load.image("background", "games/starstruck/background.png"); //tło (njalepiej jak tło będzie o wymiarach około 2000x720)
+    this.load.image("background", "skies/deep-space.jpg"); //tło (njalepiej jak tło będzie o wymiarach około 2000x720)
     this.load.image("platform", "sprites/block.png"); //bloczki (najlepiej kwadratowe o wymiarze 50x50)
-    this.load.image("bullet", "games/tanks/bullet.png" ); //pocisk (najlepiej niewielki okrągły)
+    this.load.image("bullet", "games/starstruck/star2.png" ); //pocisk (najlepiej niewielki okrągły)
     this.load.image("vendor", "games/gofish/fishie.png" ); // zamiast tej rybki to daj jakiegośgościa lub zwierzątko kwiatka (32x32)
     this.load.image("paddle", "games/breakout/paddle.png" ); //podstawka pod wrogów (60x16)
-    this.load.image("enemy", "games/tanks/tank1.png") //wróg (około64 x64)
+   
 
   //ładowanie spritesheet jako forme animacji 
   //najlepiej jak będziesz robić to w takim formacie: 32x48 jedna klatka
     this.load.spritesheet("player", "games/starstruck/dude.png", { 
       frameWidth: 32,
       frameHeight: 48
+    });
+    this.load.spritesheet("diamond", "sprites/diamonds32x24x5.png", { 
+      frameWidth: 32,
+      frameHeight: 24
+    });
+
+    this.load.spritesheet("enemy", "/sprites/pacman_by_oz_28x28.png", { 
+      frameWidth: 28,
+      frameHeight: 28
     });
 
      ///
@@ -77,7 +86,7 @@ var enemybullets;
 
   function create() {
     
-    let back = this.add.tileSprite(0, 0, 500, 300, "background"); //ładowanie tła
+    let back = this.add.tileSprite(0, 0, 1500, 720, "background"); //ładowanie tła
     back.setOrigin(0);
     back.setScrollFactor(0.1); //przewijanie tła
     this.cameras.main.setBounds(0, 0, sceneWidth, 720);
@@ -89,7 +98,7 @@ var enemybullets;
     vendor.setCollideWorldBounds(true);
     player.setCollideWorldBounds(false);
     
-    player.setBounce(0.2);
+    player.setBounce(0);
     this.cameras.main.startFollow(player);
   
     this.anims.create({
@@ -99,6 +108,23 @@ var enemybullets;
       repeat: -1
     });
 
+    
+    this.anims.create({
+      key: "eleft",
+      frames: this.anims.generateFrameNumbers("enemy", { start: 10, end: 5 }), //animacja chodu w lewo(tutaj musisz dać klatkichodu)
+      frameRate: 10,
+    });
+    this.anims.create({
+      key: "eright",
+      frames: this.anims.generateFrameNumbers("enemy", { start: 0, end: 5 }), //animacja chodu w lewo(tutaj musisz dać klatkichodu)
+      frameRate: 10,
+    });
+    this.anims.create({
+      key: "estand",
+      frames: [{ key: "enemy", frame: 5 }], //klatka stania w miejscu
+      frameRate: 20
+    });
+    
     
   
     this.anims.create({
@@ -139,10 +165,12 @@ var enemybullets;
 
     this.anims.create({ //stworzenie animacji obracającego się diamentu( tutaj musisz obsłużyć)
       key: "diam",
-      frames: this.anims.generateFrameNumbers("player", { start: 5, end: 8 }),
-      frameRate: 10,
+      frames: this.anims.generateFrameNumbers("diamond", { start: 0, end: 4 }),
+      frameRate: 5,
       repeat: -1
     });
+
+    
 
     for(var i=0;i<diamenty;i++) //tworzenie instancji diamentów
     {
@@ -155,7 +183,7 @@ var enemybullets;
       var localx=randomNumber(400, sceneWidth);
       var localy=randomNumber(150, 670)
       paddles.create(localx, localy, "paddle");
-      enemies.create(localx, localy-50, "enemy");
+      enemies.create(localx-20, localy-50, "enemy");
     }
 
     platforms.getChildren().forEach(c => //skalowanie pudełek
@@ -164,16 +192,19 @@ var enemybullets;
         .setOrigin(0)
         .refreshBody()
     );
-
-    paddles.create(600, 300, "paddle");
-      enemies.create(600, 250, "enemy");
-
+    enemies.getChildren().forEach(c => //skalowanie pudełek
+      c
+        .setScale(1.5)
+        .setOrigin(0)
+        .refreshBody()
+    );
 
     this.physics.add.collider(player, platforms); //dodanie kolizji między obiektami tj pociski i pudła
     this.physics.add.collider(player, paddles);
     this.physics.add.collider(player, enemies);
     this.physics.add.collider(vendor, platforms);
     this.physics.add.collider(enemybullets, platforms);
+    this.physics.add.collider(platforms, enemybullets);
     this.physics.add.collider(player, enemybullets);
     this.physics.add.collider(bullets, platforms);
   }
@@ -186,12 +217,12 @@ var enemybullets;
   function update() { //a ta funkcja powtarza wszystko w pętli
   if (cursors.left.isDown) { //obsługa klawisza w lewo( A animacja ruch itp)
     direction=0;
-    player.setVelocityX(-150);
+    player.setVelocityX(-200);
     player.anims.play("left", true);
     
   } else if (cursors.right.isDown) { //obsługa klawisza w prawo(D)
     direction =1;
-    player.setVelocityX(150);
+    player.setVelocityX(200);
     player.anims.play("right", true);
 
   } else { //brak wciśniętego klawisza to stoi przodem 
@@ -206,11 +237,14 @@ var enemybullets;
   }
 
   enemies.getChildren().forEach(c =>{ //losowe tworzenie pocisków przez wroga(niech one będą widoczne)
-    if(randomNumber(0, 1950)>1940)
+    if(randomNumber(0, 1950)>1945)
     {
       if(player.x<c.x)
       {
-        bullet = this.physics.add.sprite(c.x, c.y, "bullet"); 
+       
+        bullet = this.physics.add.sprite(c.x+15, c.y+15, "bullet").setImmovable(true); 
+        bullet.body.setAllowGravity(false)
+        c.anims.play("eleft", true);
        
         bullet.kont = Math.atan((player.y-c.y)/(c.x-player.x)); //ustawienia kąta tak aby celował w gracza
         bullet.kontc=Math.cos(bullet.kont)*-1
@@ -218,10 +252,13 @@ var enemybullets;
         console.log("Cos="+bullet.kontc)
         console.log("Sin="+bullet.konts)
         enemybullets.add(bullet)
+        
       }
       else //ustawienia kąta tak aby celował w gracza tak samo tylko dla opcji po prawej stronie
       {
-        bullet = this.physics.add.sprite(c.x, c.y, "bullet");  
+        bullet = this.physics.add.sprite(c.x+15, c.y+15, "bullet").setImmovable(true); 
+        bullet.body.setAllowGravity(false); 
+        c.anims.play("eright", true);
         bullet.kont = Math.atan((player.y-c.y)/(c.x-player.x));
         bullet.kontc=Math.cos(bullet.kont)
         bullet.konts=Math.sin(bullet.kont)*-1
@@ -230,11 +267,11 @@ var enemybullets;
         enemybullets.add(bullet)
       }
     }
+    
   }
     
       
   );
-
 
   if(game.input.activePointer.isDown && lockCreate==0){ //obsługa wciśnięcia myszy( tworzenie lub usuwanie klocka)
     if(platforms.getChildren().length==0) //jak nie ma żadnego klocka
@@ -328,12 +365,19 @@ var enemybullets;
         c.angle+=15;
         enemies.getChildren().forEach(d=>
           {
-            if(c.x>d.x&&c.x<d.x+64&&c.y>d.y&&c.y<d.y+64)
+            if(c.x>d.x&&c.x<d.x+40&&c.y>d.y-21&&c.y<d.y+42)
+            
             d.destroy();
           });
       }
       
     );
+
+    enemies.getChildren().forEach(d=>
+      {
+       if(game.input.activePointer.worldX>d.x&&game.input.activePointer.worldX<d.x+40)
+       console.log("Tak")
+      });
     enemybullets.getChildren().forEach(c =>{ //a jak dostaniemy pociskiem to
       c.angle+=15
 
@@ -341,8 +385,8 @@ var enemybullets;
       {
         helth--; //not helth (he ded lol)
       }
-      c.x=c.x+c.kontc*8;
-      c.y=c.y+c.konts*8;
+      c.x=c.x+c.kontc*5;
+      c.y=c.y+c.konts*5;
     }
 
     );
